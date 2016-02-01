@@ -1,0 +1,132 @@
+#!/bin/bash
+cp /usr/script/sslist /usr/script/sslist.old
+userFile="/usr/usrlog"
+
+inputusr ()
+{
+while [ -z "$user" ];
+do
+        while echo $user | grep -v -q @;
+        do
+                echo "Please Input Your Account!"
+                read user
+        done
+done
+}
+
+inputusr2 ()
+{
+while [ -z "$user2" ];
+do
+        while echo $user2 | grep -v -q @;
+        do
+                echo "Please Input Your Account Again!"
+                read user2
+        done
+done
+}
+
+inputpwd ()
+{
+while [ -z "$pwd" ];
+do
+        echo "Please Input Your Password!"
+        read pwd
+done
+}
+
+inputpwd2 ()
+{
+while [ -z "$pwd2" ];
+do
+        echo "Please Input Your Password Again!"
+        read pwd2
+done
+}
+
+if [ ! -f "$userFile" ];
+then
+touch "$userFile"
+inputusr
+inputusr2
+        while [ "$user" != "$user2" ];
+        do
+echo "Inconsistent Username Twice!"
+unset user
+unset user2
+inputusr
+inputusr2
+        done
+echo $user >> $userFile
+inputpwd
+inputpwd2
+ while [ "$pwd" != "$pwd2" ];
+        do
+echo "Inconsistent Password Twice!"
+unset pwd
+unset pwd2
+inputpwd
+inputpwd2
+        done
+echo $pwd >> $userFile
+fi
+
+uname=$(sed -n 1p $userFile)
+upwd=$(sed -n 2p $userFile)
+
+curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
+curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=2461"|grep '<a name="qrcode" data-qrcode="rc4-md5:260822136@'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'>/usr/script/sslist
+iplineno=0
+ipline=$(cat -n /usr/script/sslist|wc -l)
+echo -e "\c" > /usr/script/sslivedip
+while (( $iplineno < $ipline ));
+do
+        (( iplineno++ ))
+        echo -e "No.$iplineno ss-server \c"
+        ary_ipaddr[$iplineno]=$(sed -n "$iplineno"p /usr/script/sslist)
+        echo -e "${ary_ipaddr[$iplineno]} \c"
+        pingcnt=10
+        ary_delytme[$iplineno]=$(ping ${ary_ipaddr[$iplineno]} -c $pingcnt -W 1|awk -v cnt=$pingcnt 'BEGIN{FS=" (time=)?"}/^64 bytes/{sum+=$(NF-1)}END{print sum/cnt}')
+        if [ $(echo "${ary_delytme[$iplineno]}>0"|bc) -eq 1 ];
+        then
+                echo ${ary_ipaddr[$iplineno]} >> /usr/script/sslivedip
+        fi
+        echo Avg. Delay Time is "${ary_delytme[$iplineno]}"ms
+done
+min=${ary_delytme[1]}
+minip=${ary_ipaddr[1]}
+match_cnt=1
+while (( $match_cnt < $ipline ));
+do
+      if [[ $(echo "$min>0"|bc) -eq 1 ]];
+       then
+              (( match_cnt++ ))
+              if [[ $(echo "${ary_delytme[$match_cnt]}>0"|bc) -eq 1 ]];
+              then
+                      if [[ $(echo "$min>=${ary_delytme[$match_cnt]}"|bc) -eq 1 ]];
+                      then
+                              min=${ary_delytme[$match_cnt]}
+                              minip=${ary_ipaddr[$match_cnt]}
+                      fi
+              fi
+      else
+               (( match_cnt++ ))
+               min=${ary_delytme[$match_cnt]}
+               minip=${ary_ipaddr[$match_cnt]}
+       fi
+done
+echo The Fastest ss-server is $minip and Avg. Delay is "$min"ms
+cp /usr/minssrecord /usr/minssrecord.old
+echo $minip > /usr/minssrecord
+diff -a /usr/minssrecord /usr/minssrecord.old > /dev/null 2>&1
+if [ $? -ne 0 ];
+then
+        echo "ss server will be update"
+        set_minip=\"server\":\""$minip"\",
+	echo $set_minip
+        sed "2s/^.*$/$set_minip/" /etc/ss-redir.json > /etc/ss-redir.json.tmp
+	mv /etc/ss-redir.json.tmp /etc/ss-redir.json
+	killall ss-redir
+	nohup ss-redir -c /etc/ss-redir.json >> /dev/null 2>&1 &
+else     echo "Your ss server was the fatest!"
+fi
