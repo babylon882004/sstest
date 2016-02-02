@@ -75,7 +75,7 @@ uname=$(sed -n 1p $userFile)
 upwd=$(sed -n 2p $userFile)
 
 curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
-curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=2461"|grep '<a name="qrcode" data-qrcode="rc4-md5:260822136@'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'>/usr/script/sslist
+curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=2461"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'>/usr/script/sslist
 iplineno=0
 ipline=$(cat -n /usr/script/sslist|wc -l)
 echo -e "\c" > /usr/script/sslivedip
