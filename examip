@@ -4,9 +4,9 @@ userFile="/usr/usrlog"
 ##################For input username at the first time
 inputusr ()
 {
-while [ -z "$user" ];
+while [ -z "$user" ]
 do
-        while echo $user | grep -v -q @;
+        while echo $user | grep -v -q @
         do
                 echo "Please Input Your Account!"
                 read user
@@ -16,9 +16,9 @@ done
 ##################For input username at the second time
 inputusr2 ()
 {
-while [ -z "$user2" ];
+while [ -z "$user2" ]
 do
-        while echo $user2 | grep -v -q @;
+        while echo $user2 | grep -v -q @
         do
                 echo "Please Input Your Account Again!"
                 read user2
@@ -28,7 +28,7 @@ done
 ##################For input password at the first time
 inputpwd ()
 {
-while [ -z "$pwd" ];
+while [ -z "$pwd" ]
 do
         echo "Please Input Your Password!"
         read pwd
@@ -37,7 +37,7 @@ done
 ##################For input password at the second time
 inputpwd2 ()
 {
-while [ -z "$pwd2" ];
+while [ -z "$pwd2" ]
 do
         echo "Please Input Your Password Again!"
         read pwd2
@@ -47,7 +47,7 @@ done
 blkignore ()
 {
 cd /usr/script
-if [ ! -s ssblk ];
+if [ ! -s ssblk ]
 then
 	echo '#######################################'
         echo "No ss-server in Blacklist can be ignore"
@@ -62,7 +62,7 @@ else
         echo "${ary_igaddr[1]}"
         echo '#######################################'
         sed "/${ary_igaddr[1]}/d" /usr/script/sslist.remote > /usr/script/sslist.1
-        while (( $iglineno < $igline ));
+        while (( $iglineno < $igline ))
         do
 		fileno=$iglineno
                 (( iglineno++ ))
@@ -76,7 +76,7 @@ else
         done
         cp /usr/script/sslist.$iglineno /usr/script/sslist
         iglineno=0
-        while (( $iglineno < $igline ));
+        while (( $iglineno < $igline ))
         do
                 (( iglineno++ ))
                 rm -f /usr/script/sslist.$iglineno
@@ -102,12 +102,12 @@ do
         curl --socks5 127.0.0.1:1080 --connect-timeout 10 https://raw.githubusercontent.com/babylon882004/urlcheck/master/check|grep -o OK > /usr/script/pgreslt
         #cd /usr/script/
 pwd
-        if [ ! -s pgreslt ];
+        if [ ! -s pgreslt ]
         then
                 echo $testip|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' >> /usr/script/ssblk
         	echo '#########################################'
 		echo "ss-server $testip will add to blacklist!"
-		echo '#############i###########################'
+		echo '#########################################'
         else
                 echo '#########################################'
                 echo "ss-server $testip works fine!"
@@ -118,12 +118,12 @@ done
 }
 ###########################This is the end of Function part
 ###########################This Part used for get the user count and password, and input user count and password when run this script first time!
-if [ ! -f "$userFile" ];
+if [ ! -f "$userFile" ]
 then
 	touch "$userFile"
 	inputusr
 	inputusr2
-        while [ "$user" != "$user2" ];
+        while [ "$user" != "$user2" ]
         do
 		echo "Inconsistent Username Twice!"
 		unset user
@@ -134,7 +134,7 @@ then
 	echo $user >> $userFile
 	inputpwd
 	inputpwd2
-	while [ "$pwd" != "$pwd2" ];
+	while [ "$pwd" != "$pwd2" ]
         do
 		echo "Inconsistent Password Twice!"
 		unset pwd
@@ -184,7 +184,7 @@ blkignore
 iplineno=0
 ipline=$(cat -n /usr/script/sslist|wc -l)
 echo -e "\c" > /usr/script/sslivedip
-while (( $iplineno < $ipline ));
+while (( $iplineno < $ipline ))
 do
         (( iplineno++ ))
         echo -e "No.$iplineno ss-server \c"
@@ -192,7 +192,7 @@ do
         echo -e "${ary_ipaddr[$iplineno]} \c"
         pingcnt=10
         ary_delytme[$iplineno]=$(ping ${ary_ipaddr[$iplineno]} -c $pingcnt -W 1|awk -v cnt=$pingcnt 'BEGIN{FS=" (time=)?"}/^64 bytes/{sum+=$(NF-1)}END{print sum/cnt}')
-        if [ $(echo "${ary_delytme[$iplineno]}>0"|bc) -eq 1 ];
+        if [ $(echo "${ary_delytme[$iplineno]}>0"|bc) -eq 1 ]
         then
                 echo ${ary_ipaddr[$iplineno]} >> /usr/script/sslivedip
         fi
@@ -201,14 +201,14 @@ done
 min=${ary_delytme[1]}
 minip=${ary_ipaddr[1]}
 match_cnt=1
-while (( $match_cnt < $ipline ));
+while (( $match_cnt < $ipline ))
 do
-      if [[ $(echo "$min>0"|bc) -eq 1 ]];
+      if [[ $(echo "$min>0"|bc) -eq 1 ]]
        then
               (( match_cnt++ ))
-              if [[ $(echo "${ary_delytme[$match_cnt]}>0"|bc) -eq 1 ]];
+              if [[ $(echo "${ary_delytme[$match_cnt]}>0"|bc) -eq 1 ]]
               then
-                      if [[ $(echo "$min>=${ary_delytme[$match_cnt]}"|bc) -eq 1 ]];
+                      if [[ $(echo "$min>=${ary_delytme[$match_cnt]}"|bc) -eq 1 ]]
                       then
                               min=${ary_delytme[$match_cnt]}
                               minip=${ary_ipaddr[$match_cnt]}
@@ -227,7 +227,7 @@ lkblk
 cp /usr/minssrecord /usr/minssrecord.old
 echo $minip > /usr/minssrecord
 diff -a /usr/minssrecord /usr/minssrecord.old > /dev/null 2>&1
-if [ $? -ne 0 ];
+if [ $? -ne 0 ]
 then
 	ssh  -o "StrictHostKeyChecking no" -T git@github.com
 	cp /usr/minssrecord /git/ipupdate/minssrecord
