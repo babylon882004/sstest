@@ -100,7 +100,8 @@ do
         echo -e "\c" > /usr/script/pgreslt
         nohup ss-local -c /etc/ss-local.json >> /dev/null 2>&1 &
         curl --socks5 127.0.0.1:1080 --connect-timeout 10 https://raw.githubusercontent.com/babylon882004/urlcheck/master/check|grep -o OK > /usr/script/pgreslt
-        cd /usr/script/
+        #cd /usr/script/
+pwd
         if [ ! -s pgreslt ];
         then
                 echo $testip|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' >> /usr/script/ssblk
@@ -153,17 +154,15 @@ upwd=$(sed -n 2p $userFile)
 curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
 ###Update to fix url id bug
 curl -b cookie https://my.yizhihongxing.com/clientarea.php?action=products |grep ';id='|grep -o '[0-9]\{1,4\}' > /usr/script/ssurlid
-cat /usr/script/ssurlid
 idlineno=0
 idline=$(cat -n /usr/script/ssurlid|wc -l)
 while (( $idlineno < $idline ))
 do
 	(( idlineno++ ))
 	urlid=$(sed -n "$idlineno"p /usr/script/ssurlid)
-        echo 'NO.'"$idlineno"' id '"$urlid"' testing!'i
+        echo 'NO.'"$idlineno"' id '"$urlid"' testing!'
 	curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
 	curl -b cookie 'https://my.yizhihongxing.com/clientarea.php?action=productdetails&id='"$urlid"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > /usr/script/sslist.remote
-	cat /usr/script/sslist.remote
 	cd /usr/script/
 	if [ ! -s sslist.remote ]
 	then
@@ -175,14 +174,10 @@ do
 		echo "Url id $urlid OK! Shadowsocks server ip list will be update!"
 		echo '############################################################'
 		echo 'The content of sslist.remote'
-		cat /usr/script/sslist.remote
 		echo '############################################################'
 	break
 	fi
 done
-
-cd /
-###Fix code end
 
 blkignore
 
@@ -234,8 +229,6 @@ echo $minip > /usr/minssrecord
 diff -a /usr/minssrecord /usr/minssrecord.old > /dev/null 2>&1
 if [ $? -ne 0 ];
 then
-#	curl -u 'hosts@szknstar.com:76sCm\^$uh' ftp://www.huangcheng.name -X 'DELE minssrecord'
-#	curl -u 'hosts@szknstar.com:76sCm\^$uh' ftp://www.huangcheng.name -T /usr/minssrecord
 	ssh  -o "StrictHostKeyChecking no" -T git@github.com
 	cp /usr/minssrecord /git/ipupdate/minssrecord
 	cd /git/ipupdate/
