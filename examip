@@ -88,7 +88,6 @@ lkblk ()
 {
 lilineno=0
 liline=$(cat -n /usr/script/sslivedip|wc -l)
-#echo -e "\c" > /usr/script/ssblk
 while (( $lilineno < $liline ))
 do
         (( lilineno++ ))
@@ -101,7 +100,6 @@ do
         nohup ss-local -c /etc/ss-local.json >> /dev/null 2>&1 &
         curl --socks5 127.0.0.1:1080 --connect-timeout 10 https://raw.githubusercontent.com/babylon882004/urlcheck/master/check|grep -o OK > /usr/script/pgreslt
         #cd /usr/script/
-pwd
         if [ ! -s pgreslt ]
         then
                 echo $testip|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' >> /usr/script/ssblk
