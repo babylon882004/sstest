@@ -1,7 +1,7 @@
 #!/bin/bash
-cp /usr/script/sslist /usr/script/sslist.old
 userFile="/usr/usrlog"
-
+#########################This is the start of Function part
+##################For input username at the first time
 inputusr ()
 {
 while [ -z "$user" ];
@@ -13,7 +13,7 @@ do
         done
 done
 }
-
+##################For input username at the second time
 inputusr2 ()
 {
 while [ -z "$user2" ];
@@ -25,7 +25,7 @@ do
         done
 done
 }
-
+##################For input password at the first time
 inputpwd ()
 {
 while [ -z "$pwd" ];
@@ -34,7 +34,7 @@ do
         read pwd
 done
 }
-
+##################For input password at the second time
 inputpwd2 ()
 {
 while [ -z "$pwd2" ];
@@ -43,39 +43,149 @@ do
         read pwd2
 done
 }
-
+##################For delete ss ip at the blacklist
+blkignore ()
+{
+cd /usr/script
+if [ ! -s ssblk ];
+then
+	echo '#######################################'
+        echo "No ss-server in Blacklist can be ignore"
+        echo '#######################################'
+	cp /usr/script/sslist.remote /usr/script/sslist
+else
+        iglineno=1
+        igline=$(cat -n /usr/script/ssblk|wc -l)
+        ary_igaddr[1]=$(sed -n 1p /usr/script/ssblk)
+        echo '#######################################'
+        echo -e "No.$iglineno Blacklist ss-server will be ignore \c"
+        echo "${ary_igaddr[1]}"
+        echo '#######################################'
+        sed "/${ary_igaddr[1]}/d" /usr/script/sslist.remote > /usr/script/sslist.1
+        while (( $iglineno < $igline ));
+        do
+		fileno=$iglineno
+                (( iglineno++ ))
+        	echo '#######################################'
+                echo -e "No.$iglineno Blacklist ss-server will be ignore \c"
+                ary_igaddr[$iglineno]=$(sed -n "$iglineno"p /usr/script/ssblk)
+                echo "${ary_igaddr[$iglineno]}"
+		delip=${ary_igaddr[$iglineno]}
+       		echo '#######################################'
+                sed "/$delip/d" /usr/script/sslist.$fileno > /usr/script/sslist.$iglineno
+        done
+        cp /usr/script/sslist.$iglineno /usr/script/sslist
+        iglineno=0
+        while (( $iglineno < $igline ));
+        do
+                (( iglineno++ ))
+                rm -f /usr/script/sslist.$iglineno
+        done
+fi
+}
+##################For find out useless ss-server
+lkblk ()
+{
+lilineno=0
+liline=$(cat -n /usr/script/sslivedip|wc -l)
+#echo -e "\c" > /usr/script/ssblk
+while (( $lilineno < $liline ))
+do
+        (( lilineno++ ))
+        testip=$(sed -n "$lilineno"p /usr/script/sslivedip)
+        set_minip=\"server\":\""$testip"\",
+        sed "2s/^.*$/$set_minip/" /etc/ss-local.json > /etc/ss-local.json.tmp
+        cp /etc/ss-local.json.tmp /etc/ss-local.json
+        rm /etc/ss-local.json.tmp
+        echo -e "\c" > /usr/script/pgreslt
+        nohup ss-local -c /etc/ss-local.json >> /dev/null 2>&1 &
+        curl --socks5 127.0.0.1:1080 --connect-timeout 10 https://raw.githubusercontent.com/babylon882004/urlcheck/master/check|grep -o OK > /usr/script/pgreslt
+        cd /usr/script/
+        if [ ! -s pgreslt ];
+        then
+                echo $testip|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' >> /usr/script/ssblk
+        	echo '#########################################'
+		echo "ss-server $testip will add to blacklist!"
+		echo '#############i###########################'
+        else
+                echo '#########################################'
+                echo "ss-server $testip works fine!"
+                echo '#########################################'
+        fi
+        killall ss-local
+done
+}
+###########################This is the end of Function part
+###########################This Part used for get the user count and password, and input user count and password when run this script first time!
 if [ ! -f "$userFile" ];
 then
-touch "$userFile"
-inputusr
-inputusr2
+	touch "$userFile"
+	inputusr
+	inputusr2
         while [ "$user" != "$user2" ];
         do
-echo "Inconsistent Username Twice!"
-unset user
-unset user2
-inputusr
-inputusr2
+		echo "Inconsistent Username Twice!"
+		unset user
+		unset user2
+		inputusr
+		inputusr2
         done
-echo $user >> $userFile
-inputpwd
-inputpwd2
- while [ "$pwd" != "$pwd2" ];
+	echo $user >> $userFile
+	inputpwd
+	inputpwd2
+	while [ "$pwd" != "$pwd2" ];
         do
-echo "Inconsistent Password Twice!"
-unset pwd
-unset pwd2
-inputpwd
-inputpwd2
+		echo "Inconsistent Password Twice!"
+		unset pwd
+		unset pwd2
+		inputpwd
+		inputpwd2
         done
-echo $pwd >> $userFile
+	echo $pwd >> $userFile
 fi
-
+###########################This is the end of below part
+###########################This is Main Part START
+cp /usr/script/sslist /usr/script/sslist.old
+cp /usr/script/sslist.remote /usr/script/sslist.remote.old
 uname=$(sed -n 1p $userFile)
 upwd=$(sed -n 2p $userFile)
 
 curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
-curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=2461"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'>/usr/script/sslist
+#Ignore url id bug code
+#curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=2461"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'>/usr/script/sslist.remote
+###Update to fix url id bug
+curl -b cookie https://my.yizhihongxing.com/clientarea.php?action=products |grep ';id='|grep -o '[0-9]\{1,4\}' > /usr/script/ssurlid
+idlineno=0
+idline=$(cat -n /usr/script/ssurlid|wc -l)
+while (( $idlineno < $idline ))
+do
+	(( idlineno++ ))
+	urlid=$(sed -n "$idlineno"p /usr/script/ssurlid)
+        echo 'NO.'"$idlineno"' id '"$urlid"' testing!'
+	curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=$urlid"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > /usr/script/sslist.$idlineno
+	cat /usr/script/sslist.$idlineno > /usr/script/sslist.remote
+	cd /usr/script/
+	if [ ! -s sslist.$idlineno ]
+	then
+		echo '#########################'
+		echo "Url id $urlid is useless!"
+		echo '#########################'
+	else
+		echo '############################################################'
+		echo "Url id $urlid OK! Shadowsocks server ip list will be update!"
+		echo '############################################################'
+		echo 'The content of sslist.remote'
+		cat /usr/script/sslist.remote
+		echo '############################################################'
+	break
+	fi
+done
+
+cd /
+###Fix code end
+
+blkignore
+
 iplineno=0
 ipline=$(cat -n /usr/script/sslist|wc -l)
 echo -e "\c" > /usr/script/sslivedip
@@ -116,17 +226,22 @@ do
        fi
 done
 echo The Fastest ss-server is $minip and Avg. Delay is "$min"ms
+
+lkblk
+
 cp /usr/minssrecord /usr/minssrecord.old
 echo $minip > /usr/minssrecord
 diff -a /usr/minssrecord /usr/minssrecord.old > /dev/null 2>&1
 if [ $? -ne 0 ];
 then
-        echo "ss server will be update"
-        set_minip=\"server\":\""$minip"\",
-	echo $set_minip
-        sed "2s/^.*$/$set_minip/" /etc/ss-redir.json > /etc/ss-redir.json.tmp
-	mv /etc/ss-redir.json.tmp /etc/ss-redir.json
-	killall ss-redir
-	nohup ss-redir -c /etc/ss-redir.json >> /dev/null 2>&1 &
-else     echo "Your ss server was the fatest!"
+#	curl -u 'hosts@szknstar.com:76sCm\^$uh' ftp://www.huangcheng.name -X 'DELE minssrecord'
+#	curl -u 'hosts@szknstar.com:76sCm\^$uh' ftp://www.huangcheng.name -T /usr/minssrecord
+	ssh  -o "StrictHostKeyChecking no" -T git@github.com
+	cp /usr/minssrecord /git/ipupdate/minssrecord
+	cd /git/ipupdate/
+	git add minssrecord
+	uptime=$(date '+%Y%m%d%H%M')
+	git commit -m "$uptime"
+	git push
+else     echo "No need update!"
 fi
