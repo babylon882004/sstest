@@ -151,21 +151,21 @@ uname=$(sed -n 1p $userFile)
 upwd=$(sed -n 2p $userFile)
 
 curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
-#Ignore url id bug code
-#curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=2461"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}'>/usr/script/sslist.remote
 ###Update to fix url id bug
 curl -b cookie https://my.yizhihongxing.com/clientarea.php?action=products |grep ';id='|grep -o '[0-9]\{1,4\}' > /usr/script/ssurlid
+cat /usr/script/ssurlid
 idlineno=0
 idline=$(cat -n /usr/script/ssurlid|wc -l)
 while (( $idlineno < $idline ))
 do
 	(( idlineno++ ))
 	urlid=$(sed -n "$idlineno"p /usr/script/ssurlid)
-        echo 'NO.'"$idlineno"' id '"$urlid"' testing!'
-	curl -b cookie "https://my.yizhihongxing.com/clientarea.php?action=productdetails&id=$urlid"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > /usr/script/sslist.$idlineno
-	cat /usr/script/sslist.$idlineno > /usr/script/sslist.remote
+        echo 'NO.'"$idlineno"' id '"$urlid"' testing!'i
+	curl -L -c cookie --data 'username='"$uname"'&''password='"$upwd" https://my.yizhihongxing.com/dologin.php >> /dev/null 2>&1
+	curl -b cookie 'https://my.yizhihongxing.com/clientarea.php?action=productdetails&id='"$urlid"|grep '<a name="qrcode" data-qrcode="rc4-md5:'|grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' > /usr/script/sslist.remote
+	cat /usr/script/sslist.remote
 	cd /usr/script/
-	if [ ! -s sslist.$idlineno ]
+	if [ ! -s sslist.remote ]
 	then
 		echo '#########################'
 		echo "Url id $urlid is useless!"
